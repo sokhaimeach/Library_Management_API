@@ -30,4 +30,22 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { login };
+const loginByEmail = async (req, res) => {
+  try {
+    const user = await User.findOne(req.body);
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email" });
+    }
+    const token = generateToken(user._id);
+    return res.status(200).json({
+      _id: user._id,
+      email: user.email,
+      role: user.role,
+      token,
+    });
+  } catch (error) {
+    res.status(400).json({ message: "Invalid email", error: error.message });
+  }
+};
+
+module.exports = { login, loginByEmail };
