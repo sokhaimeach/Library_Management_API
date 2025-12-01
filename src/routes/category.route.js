@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get("/", protect, getAllCategories);
 router.post("/", protect, verifyRoles(ROLE[0], ROLE[2]), createCategory);
-router.patch("/:id", protect, verifyRoles(ROLE[0], ROLE[2]), updateCategory);
+router.put("/:id", protect, verifyRoles(ROLE[0], ROLE[2]), updateCategory);
 router.delete("/:id", protect, verifyRoles(ROLE[0], ROLE[2]), deleteCategory);
 
 module.exports = router;
