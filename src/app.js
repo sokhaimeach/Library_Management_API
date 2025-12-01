@@ -1,5 +1,4 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
@@ -7,6 +6,7 @@ const userRoutes = require("./routes/user.route");
 const connectDB = require("./config/db");
 const categoriesRoutes = require("./routes/category.route");
 const authorsRoutes = require("./routes/author.route");
+const membersRoutes = require("./routes/member.route");
 
 // Initialize MongoDB connection
 connectDB();
@@ -19,5 +19,6 @@ app.use(express.json());
 app.use("/users", userRoutes);
 app.use("/categories", categoriesRoutes);
 app.use("/authors", authorsRoutes);
+app.use("/members", membersRoutes);
 
 module.exports = app;
