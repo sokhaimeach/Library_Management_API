@@ -7,6 +7,7 @@ const connectDB = require("./config/db");
 const categoriesRoutes = require("./routes/category.route");
 const authorsRoutes = require("./routes/author.route");
 const membersRoutes = require("./routes/member.route");
+const bookRoutes = require("./routes/book.route");
 
 // Initialize MongoDB connection
 connectDB();
@@ -20,5 +21,6 @@ app.use("/users", userRoutes);
 app.use("/categories", categoriesRoutes);
 app.use("/authors", authorsRoutes);
 app.use("/members", membersRoutes);
+app.use("/books", bookRoutes);
 
 module.exports = app;
