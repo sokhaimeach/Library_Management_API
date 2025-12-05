@@ -1,6 +1,8 @@
 const BorrowRecord = require("../models/borrowrecord");
 const BookCopy = require("../models/bookcopy");
 const Member = require("../models/member");
+const Book = require("../models/book");
+const Penalty = require("../models/penalty");
 const { default: mongoose } = require("mongoose");
 
 // get all borrow record
@@ -202,7 +204,7 @@ const getRecordDetails = async (req, res) => {
 const updateRecordStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, damage_type, damage_fee } = req.body;
     const record = await BorrowRecord.findByIdAndUpdate(
       id,
       { status },
@@ -211,13 +213,132 @@ const updateRecordStatus = async (req, res) => {
     if (!record) {
       return res.status(404).json({ message: "Borrow record not found" });
     }
-    res.status(200).json(record);
+    // update book copy status based on status
+    res.status(200).json({
+      message: await updateBookCopyStatusAndCreatePenalty(
+        record,
+        damage_type,
+        damage_fee,
+      ),
+    });
   } catch (err) {
     res
       .status(400)
       .json({ message: "Error update borrow record status " + err.message });
   }
 };
+
+// update book copy status and create penalty
+async function updateBookCopyStatusAndCreatePenalty(
+  record,
+  damage_type,
+  damage_fee,
+) {
+  switch (record.status) {
+    case "returned": {
+      const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
+        status: "available",
+      });
+      if (!copy) {
+        return "Book copy not found";
+      }
+      return "Book copy status updated";
+    }
+    case "lost": {
+      const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
+        status: "lost",
+      });
+      if (!copy) {
+        return "Book copy not found";
+      }
+      const book = await Book.findById(record.book_id);
+      if (!book) {
+        return "Book not found";
+      }
+      await Penalty.create({
+        member_id: record.member_id,
+        borrow_id: record._id,
+        penalty_type: "lost",
+        amount: book.price,
+        note: "Book lost",
+      });
+      return "Member has been penalized for lost book";
+    }
+    case "late": {
+      const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
+        status: "available",
+      });
+      if (!copy) {
+        return "Book copy not found";
+      }
+      let fine_fee = 0;
+      const lateDays = Math.ceil(
+        (record.return_date - record.due_date) / (1000 * 60 * 60 * 24),
+      );
+      if (lateDays > 0) {
+        if (lateDays < 7) {
+          return "Book returned within 7 days, no penalty";
+        } else if (lateDays < 14) {
+          fine_fee = 0.5;
+        } else if (lateDays < 21) {
+          fine_fee = 1;
+        } else {
+          fine_fee = 2;
+        }
+      }
+      await Penalty.create({
+        member_id: record.member_id,
+        borrow_id: record._id,
+        penalty_type: "late",
+        amount: fine_fee,
+        note: "Book returned late",
+      });
+      return "Member has been penalized for late return";
+    }
+    case "damaged": {
+      if (damage_type === "can") {
+        const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
+          status: "available",
+        });
+        if (!copy) {
+          return "Book copy not found";
+        }
+        await Penalty.create({
+          member_id: record.member_id,
+          borrow_id: record._id,
+          penalty_type: "damaged",
+          amount: damage_fee,
+          note: "Book damaged",
+        });
+        return "Member has been penalized for damaged return";
+      } else {
+        const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
+          deleted: true,
+          deleted_at: Date.now(),
+        });
+        if (!copy) {
+          return "Book copy not found";
+        }
+        const book = await Book.findByIdAndUpdate(
+          record.book_id,
+          { $inc: { total_copies: -1 } },
+          { new: true },
+        );
+        if (!book) {
+          return "Book not found";
+        }
+        await Penalty.create({
+          member_id: record.member_id,
+          borrow_id: record._id,
+          penalty_type: "damaged",
+          amount: book.price,
+          note: "Book damaged",
+        });
+        return "Member has been penalized for damaged book";
+      }
+    }
+  }
+}
 
 module.exports = {
   getAllRecord,

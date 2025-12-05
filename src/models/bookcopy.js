@@ -8,7 +8,7 @@ const BookCopySchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["available", "unavailable"],
+    enum: ["available", "unavailable", "lost"],
     default: "available",
   },
   deleted: {

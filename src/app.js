@@ -9,6 +9,7 @@ const authorsRoutes = require("./routes/author.route");
 const membersRoutes = require("./routes/member.route");
 const bookRoutes = require("./routes/book.route");
 const borrowRecordRoutes = require("./routes/borrowrecord.route");
+const penaltyRoutes = require("./routes/penalty.route");
 
 // Initialize MongoDB connection
 connectDB();
@@ -24,5 +25,6 @@ app.use("/authors", authorsRoutes);
 app.use("/members", membersRoutes);
 app.use("/books", bookRoutes);
 app.use("/borrowrecord", borrowRecordRoutes);
+app.use("/penalties", penaltyRoutes);
 
 module.exports = app;
