@@ -23,7 +23,7 @@ const PenaltySchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "paid", "replaced"],
+    enum: ["pending", "paid", "replaced", "returned"],
     default: "pending",
   },
   note: {

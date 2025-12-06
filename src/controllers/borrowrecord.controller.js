@@ -262,7 +262,10 @@ async function updateBookCopyStatusAndCreatePenalty(
         amount: book.price,
         note: "Book lost",
       });
-      return "Member has been penalized for lost book";
+      await Member.findByIdAndUpdate(record.member_id, {
+        status: "blacklist",
+      });
+      return "Member has been added to blacklist and penalized for lost book";
     }
     case "late": {
       const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
@@ -285,13 +288,15 @@ async function updateBookCopyStatusAndCreatePenalty(
         } else {
           fine_fee = 2;
         }
+      } else {
+        return "Book returned on time";
       }
       await Penalty.create({
         member_id: record.member_id,
         borrow_id: record._id,
         penalty_type: "late",
         amount: fine_fee,
-        note: "Book returned late",
+        note: `Book returned ${lateDays} days late`,
       });
       return "Member has been penalized for late return";
     }
@@ -334,7 +339,10 @@ async function updateBookCopyStatusAndCreatePenalty(
           amount: book.price,
           note: "Book damaged",
         });
-        return "Member has been penalized for damaged book";
+        await Member.findByIdAndUpdate(record.member_id, {
+          status: "blacklist",
+        });
+        return "Member has been added to blacklist and penalized for damaged book";
       }
     }
   }

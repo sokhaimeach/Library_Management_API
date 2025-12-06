@@ -1,5 +1,7 @@
 const Penalty = require("../models/penalty");
 const BorrowRecord = require("../models/borrowrecord");
+const Book = require("../models/book");
+const BookCopy = require("../models/bookcopy");
 const mongoose = require("mongoose");
 
 // create new penalty
@@ -182,13 +184,76 @@ const updatePenaltyStatus = async (req, res) => {
     if (!penalty) {
       return res.status(404).json({ message: "Penalty not found" });
     }
-    res.status(200).json({ message: "Penalty status updated successfully" });
+    // decide what to do based on status
+    if (penalty.penalty_type === "lost") {
+      res.status(200).json({ message: await handleLostBook(penalty) });
+    } else if (penalty.penalty_type === "late") {
+      res.status(200).json({ message: "Member has been paid for late book" });
+    } else {
+      res.status(200).json({ message: await handleDamageBook(penalty) });
+    }
   } catch (err) {
     res
       .status(400)
       .json({ message: "Error updating penalty status " + err.message });
   }
 };
+
+// case lost book
+async function handleLostBook(penalty) {
+  await Member.findByIdAndUpdate(penalty.member_id, {
+    member_type: "regular",
+  });
+  const borrow = await BorrowRecord.findById(penalty.borrow_id);
+  if (!borrow) {
+    return res.status(404).json({ message: "Borrow record not found" });
+  }
+  if (penalty.status === "paid") {
+    await BookCopy.findByIdAndUpdate(borrow.copy_id, {
+      deleted: true,
+      deleted_at: new Date.now(),
+    });
+    await Book.findByIdAndUpdate(borrow.book_id, {
+      $inc: { total_copies: -1 },
+    });
+    return "Member has been paid for lost book";
+  } else if (penalty.status === "replaced") {
+    await BookCopy.findByIdAndDelete(borrow.copy_id);
+    await BookCopy.create({ book_id: borrow.book_id });
+    return "Member has been replaced new book";
+  } else if (penalty.status === "returned") {
+    await BookCopy.findByIdAndUpdate(borrow.copy_id, { status: "available" });
+    return "Member has been returned the lost book";
+  }
+}
+// case damage book
+async function handleDamageBook(penalty) {
+  const borrow = await BorrowRecord.findById(penalty.borrow_id);
+  const damage_type = await BookCopy.countDocuments({
+    _id: borrow.copy_id,
+    deleted: true,
+  });
+  if (damage_type > 0) {
+    if (penalty.status === "paid") {
+      await BookCopy.findByIdAndDelete(borrow.copy_id);
+      await Member.findByIdAndUpdate(penalty.member_id, {
+        member_type: "regular",
+      });
+      return "Member has been paid for damaged book";
+    } else if (penalty.status === "replaced") {
+      await BookCopy.findByIdAndDelete(borrow.copy_id);
+      await BookCopy.create({ book_id: borrow.book_id });
+      await Member.findByIdAndUpdate(penalty.member_id, {
+        member_type: "regular",
+      });
+      return "Member has been replaced new book";
+    } else {
+      return "Status not found";
+    }
+  } else {
+    return "Member has been paid for the damaged book";
+  }
+}
 
 // delete penalty
 const deletePenalty = async (req, res) => {
