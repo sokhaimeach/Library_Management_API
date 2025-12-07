@@ -235,6 +235,7 @@ async function updateBookCopyStatusAndCreatePenalty(
   damage_fee,
 ) {
   switch (record.status) {
+    // case returned
     case "returned": {
       const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
         status: "available",
@@ -244,6 +245,7 @@ async function updateBookCopyStatusAndCreatePenalty(
       }
       return "Book copy status updated";
     }
+    // case lost
     case "lost": {
       const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
         status: "lost",
@@ -263,10 +265,11 @@ async function updateBookCopyStatusAndCreatePenalty(
         note: "Book lost",
       });
       await Member.findByIdAndUpdate(record.member_id, {
-        status: "blacklist",
+        member_type: "blacklist",
       });
       return "Member has been added to blacklist and penalized for lost book";
     }
+    // case late
     case "late": {
       const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
         status: "available",
@@ -300,6 +303,7 @@ async function updateBookCopyStatusAndCreatePenalty(
       });
       return "Member has been penalized for late return";
     }
+    // case damaged
     case "damaged": {
       if (damage_type === "can") {
         const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
@@ -340,7 +344,7 @@ async function updateBookCopyStatusAndCreatePenalty(
           note: "Book damaged",
         });
         await Member.findByIdAndUpdate(record.member_id, {
-          status: "blacklist",
+          member_type: "blacklist",
         });
         return "Member has been added to blacklist and penalized for damaged book";
       }
