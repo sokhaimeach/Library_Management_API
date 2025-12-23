@@ -2,7 +2,7 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "30d" });
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
 
 const login = async (req, res) => {
@@ -10,7 +10,7 @@ const login = async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username }).select("+password");
     if (!user) {
-      return res.status(400).json({ message: "Invalid username or password" });
+      return res.status(404).json({ message: "Invalid username or password" });
     }
     const passwordMatching = await user.matchPassword(password);
     if (!user || !passwordMatching) {
@@ -18,10 +18,14 @@ const login = async (req, res) => {
     }
     const token = generateToken(user._id);
     return res.status(200).json({
-      _id: user._id,
-      username: user.username,
-      role: user.role,
-      token,
+      message: "Login successfully",
+      data: {
+        _id: user._id,
+        username: user.username,
+        image_url: user.image_url,
+        role: user.role,
+        token,
+      },
     });
   } catch (error) {
     res
@@ -38,10 +42,14 @@ const loginByEmail = async (req, res) => {
     }
     const token = generateToken(user._id);
     return res.status(200).json({
-      _id: user._id,
-      email: user.email,
-      role: user.role,
-      token,
+      message: "Login successfully",
+      data: {
+        _id: user._id,
+        username: user.username,
+        image_url: user.image_url,
+        role: user.role,
+        token,
+      },
     });
   } catch (error) {
     res.status(400).json({ message: "Invalid email", error: error.message });

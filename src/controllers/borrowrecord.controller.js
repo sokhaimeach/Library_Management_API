@@ -38,6 +38,7 @@ const getAllRecord = async (req, res) => {
           status: 1,
           borrow_date: 1,
           due_date: 1,
+          return_date: 1,
         },
       },
     ];
@@ -315,7 +316,7 @@ async function updateBookCopyStatusAndCreatePenalty(
         await Penalty.create({
           member_id: record.member_id,
           borrow_id: record._id,
-          penalty_type: "damaged",
+          penalty_type: "damage",
           amount: damage_fee,
           note: "Book damaged",
         });
@@ -339,7 +340,7 @@ async function updateBookCopyStatusAndCreatePenalty(
         await Penalty.create({
           member_id: record.member_id,
           borrow_id: record._id,
-          penalty_type: "damaged",
+          penalty_type: "damage",
           amount: book.price,
           note: "Book damaged",
         });

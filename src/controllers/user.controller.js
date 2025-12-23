@@ -13,13 +13,40 @@ const createUser = async (req, res) => {
 // get users
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const pipline = [
+      {
+        $project: {
+          username: 1,
+          role: 1,
+          image_url: 1,
+          status: 1,
+          start_date: 1,
+          contact: 1,
+          address: 1,
+        },
+      },
+    ];
+    const users = await User.aggregate(pipline);
     if (users.length === 0) {
       return res.status(404).json({ message: "Sorry, no users found" });
     }
     return res.status(200).json(users);
   } catch (err) {
     res.status(500).json({ message: "Error get users " + err.message });
+  }
+};
+
+// get userdetails
+const getUserDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Sorry, user not found" });
+    }
+    return res.status(200).json(user);
+  } catch (err) {
+    res.status(400).json({ message: "Error get user details " + err.message });
   }
 };
 
@@ -61,4 +88,5 @@ module.exports = {
   getUsers,
   updateUser,
   updateUserStatus,
+  getUserDetails,
 };

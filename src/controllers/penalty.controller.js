@@ -48,7 +48,8 @@ const getAllPenalties = async (req, res) => {
           amount: 1,
           status: 1,
           note: 1,
-          create_date: 1,
+          created_at: 1,
+          received_at: 1,
         },
       },
     ];

@@ -10,6 +10,7 @@ const membersRoutes = require("./routes/member.route");
 const bookRoutes = require("./routes/book.route");
 const borrowRecordRoutes = require("./routes/borrowrecord.route");
 const penaltyRoutes = require("./routes/penalty.route");
+const authRoutes = require("./routes/auth.route");
 
 // Initialize MongoDB connection
 connectDB();
@@ -19,12 +20,13 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/users", userRoutes);
-app.use("/categories", categoriesRoutes);
-app.use("/authors", authorsRoutes);
-app.use("/members", membersRoutes);
-app.use("/books", bookRoutes);
-app.use("/borrowrecord", borrowRecordRoutes);
-app.use("/penalties", penaltyRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/categories", categoriesRoutes);
+app.use("/api/authors", authorsRoutes);
+app.use("/api/members", membersRoutes);
+app.use("/api/books", bookRoutes);
+app.use("/api/borrowrecord", borrowRecordRoutes);
+app.use("/api/penalties", penaltyRoutes);
+app.use("/api/auth", authRoutes);
 
 module.exports = app;

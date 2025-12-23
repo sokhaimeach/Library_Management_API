@@ -61,7 +61,7 @@ const moveAllAvailableCopiesToRecycleBin = async (req, res) => {
       return res.status(404).json({ message: "No available copies found" });
     }
     await BookCopy.updateMany(
-      { status: "available" },
+      { book_id: id, status: "available" },
       { deleted: true, deleted_at: Date.now() },
     );
     await Book.findByIdAndUpdate(id, {
@@ -99,9 +99,36 @@ const deleteAllAvailableCopiesPermanently = async (req, res) => {
   }
 };
 
+// restore all available copies from recycle bin
+const restoreFromRecycleBin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const copies = await BookCopy.updateMany(
+      { book_id: id, status: "available", deleted: true },
+      { deleted: false, deleted_at: null },
+    );
+    if (copies.modifiedCount === 0) {
+      return res
+        .status(404)
+        .json({ message: "No available copies found in recycle bin" });
+    }
+    await Book.findByIdAndUpdate(id, {
+      $inc: { total_copies: copies.modifiedCount },
+    });
+    return res
+      .status(200)
+      .json({ message: "All available copies restored from recycle bin" });
+  } catch (error) {
+    res.status(400).json({
+      message: "Error restoring copies from recycle bin " + error.message,
+    });
+  }
+};
+
 module.exports = {
   moveCopyToRecycleBin,
   deleteCopyPermanently,
   moveAllAvailableCopiesToRecycleBin,
   deleteAllAvailableCopiesPermanently,
+  restoreFromRecycleBin,
 };
