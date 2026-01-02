@@ -53,42 +53,69 @@ const deleteCopyPermanently = async (req, res) => {
 };
 
 // move all available copies to recycle bin
-const moveAllAvailableCopiesToRecycleBin = async (req, res) => {
+const moveAvailableCopiesByQuantity = async (req, res) => {
   try {
     const { id } = req.params;
-    const copies = await BookCopy.find({ book_id: id, status: "available" });
-    if (copies.length === 0) {
-      return res.status(404).json({ message: "No available copies found" });
+    const { quantity } = req.body;
+    const qty = Number(quantity);
+
+    if (!qty || qty <= 0) {
+      return res.status(400).json({ message: "Quantity must be greater than 0" });
     }
+
+    // 1. Find limited available copies
+    const copies = await BookCopy.find({
+      book_id: id,
+      status: "available",
+      deleted: false,
+    })
+      .limit(qty)
+      .select("_id");
+
+      
+      if (copies.length === 0) {
+        return res.status(404).json({ message: "No available copies found" });
+      }
+
+      const book = await Book.findById(id).select("total_copies");
+      if(book && book.total_copies === qty){
+        await Book.findByIdAndUpdate(id, {deleted: true, deleted_at: new Date()});
+      }
+
+    // 2. Update only selected copies
     await BookCopy.updateMany(
-      { book_id: id, status: "available" },
-      { deleted: true, deleted_at: Date.now() },
+      { _id: { $in: copies.map(c => c._id) } },
+      { deleted: true, deleted_at: Date.now() }
     );
+
+    // 3. Decrease total_copies by actual updated amount
     await Book.findByIdAndUpdate(id, {
       $inc: { total_copies: -copies.length },
     });
-    res
-      .status(200)
-      .json({ message: "All available copies moved to recycle bin" });
+
+    res.status(200).json({
+      message: `${copies.length} copies moved to recycle bin`,
+    });
+
   } catch (error) {
-    res
-      .status(400)
-      .json({ message: "Error moving copies to recycle bin " + error.message });
+    res.status(400).json({
+      message: "Error moving copies to recycle bin: " + error.message,
+    });
   }
 };
+
 
 // delete all available copies permanently
 const deleteAllAvailableCopiesPermanently = async (req, res) => {
   try {
     const { id } = req.params;
-    const copies = await BookCopy.find({ book_id: id, status: "available" });
+    const copies = await BookCopy.find({ book_id: id, status: "available", deleted: true });
     if (copies.length === 0) {
       return res.status(404).json({ message: "No available copies found" });
     }
-    await BookCopy.deleteMany({ book_id: id, status: "available" });
-    await Book.findByIdAndUpdate(id, {
-      $inc: { total_copies: -copies.length },
-    });
+    await BookCopy.deleteMany({ book_id: id, status: "available", deleted: true });
+
+    await Book.deleteOne({_id: id, deleted: true});
     res
       .status(200)
       .json({ message: "All available copies deleted permanently" });
@@ -112,6 +139,7 @@ const restoreFromRecycleBin = async (req, res) => {
         .status(404)
         .json({ message: "No available copies found in recycle bin" });
     }
+    await Book.updateOne({_id: id, deleted: true}, { deleted: false, deleted_at: null});
     await Book.findByIdAndUpdate(id, {
       $inc: { total_copies: copies.modifiedCount },
     });
@@ -128,7 +156,7 @@ const restoreFromRecycleBin = async (req, res) => {
 module.exports = {
   moveCopyToRecycleBin,
   deleteCopyPermanently,
-  moveAllAvailableCopiesToRecycleBin,
+  moveAvailableCopiesByQuantity,
   deleteAllAvailableCopiesPermanently,
   restoreFromRecycleBin,
 };

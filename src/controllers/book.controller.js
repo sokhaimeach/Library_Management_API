@@ -25,21 +25,22 @@ const createBook = async (req, res) => {
 // get all books
 const getAllBooks = async (req, res) => {
   try {
-    const { category_ids } = req.query;
+    const { category_ids, search } = req.query;
     const categories = category_ids.split(",");
     const matchStage = { deleted: false };
-    if (
-      categories.length > 0 &&
-      categories.every((id) => mongoose.Types.ObjectId.isValid(id))
-    ) {
+    if (categories.length > 0 && categories[0]) {
       matchStage.category_id = {
-        $in: categories.map((id) => new mongoose.Types.ObjectId(id)),
+        $in: categories.filter(id => id).map((id) => new mongoose.Types.ObjectId(id)),
       };
     }
-    console.log(matchStage);
+    if(search){
+      matchStage.$or = [
+        {title: {$regex: search, $options: "i"}},
+        {"author.name": {$regex: search, $options: "i"}},
+        {"category.name": {$regex: search, $options: "i"}},
+      ]
+    }
     const pipeline = [
-      { $match: matchStage },
-
       {
         $lookup: {
           from: "bookcopies",
@@ -88,7 +89,7 @@ const getAllBooks = async (req, res) => {
         },
       },
       { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-
+      { $match: matchStage },
       {
         $project: {
           title: 1,
@@ -155,8 +156,14 @@ const moveBookToRecycleBin = async (req, res) => {
 // get all books from recycle moveBookToRecycleBin
 const getAllRemoveBook = async (req, res) => {
   try {
+    const { search } = req.query;
+    let matchStage = {};
+    if(search) {
+      matchStage.title = { $regex: search, $options: "i"}
+    }
+
     const pipeline = [
-      { $match: { deleted: false } },
+      { $match: matchStage },
       {
         $lookup: {
           from: "bookcopies",
@@ -195,9 +202,10 @@ const getAllRemoveBook = async (req, res) => {
         },
       },
     ];
+
     const data = await Book.aggregate(pipeline);
     if (data.length === 0) {
-      return res.status(404).json({ message: "No delete book found" });
+      return res.status(200).json({ message: "No delete book found", data: [] });
     }
     return res.status(202).json({ message: "Get all delete book", data });
   } catch (err) {
@@ -227,6 +235,7 @@ const deleteBookPermanently = async (req, res) => {
     res.status(400).json({ message: "Error deleting book" + err.message });
   }
 };
+
 module.exports = {
   createBook,
   getAllBooks,

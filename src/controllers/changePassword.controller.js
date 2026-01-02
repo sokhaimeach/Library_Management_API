@@ -6,11 +6,11 @@ const changePassword = async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const isMatch = await user.matchPassword(oldPassword);
     if (!isMatch) {
-      return res.status(400).json({ error: "Invalid password" });
+      return res.status(400).json({type: 'error', message: "Invalid password" });
     }
     user.password = newPassword;
     await user.save();
-    res.status(200).json({ message: "Password changed successfully" });
+    res.status(200).json({type: 'success', message: "Password changed successfully" });
   } catch (error) {
     console.error(error);
     res.status(400).json({ error: "Something went wrong" });

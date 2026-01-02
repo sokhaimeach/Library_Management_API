@@ -2,6 +2,7 @@ const Penalty = require("../models/penalty");
 const BorrowRecord = require("../models/borrowrecord");
 const Book = require("../models/book");
 const BookCopy = require("../models/bookcopy");
+const Member = require("../models/member");
 const mongoose = require("mongoose");
 
 // create new penalty
@@ -202,17 +203,19 @@ const updatePenaltyStatus = async (req, res) => {
 
 // case lost book
 async function handleLostBook(penalty) {
-  await Member.findByIdAndUpdate(penalty.member_id, {
+  console.log(String(penalty.member_id));
+  const memeber =  await Member.findByIdAndUpdate(penalty.member_id, {
     member_type: "regular",
   });
+  console.log(memeber)
   const borrow = await BorrowRecord.findById(penalty.borrow_id);
   if (!borrow) {
-    return res.status(404).json({ message: "Borrow record not found" });
+    return "Borrow record not found";
   }
   if (penalty.status === "paid") {
     await BookCopy.findByIdAndUpdate(borrow.copy_id, {
       deleted: true,
-      deleted_at: new Date.now(),
+      deleted_at: new Date(),
     });
     await Book.findByIdAndUpdate(borrow.book_id, {
       $inc: { total_copies: -1 },

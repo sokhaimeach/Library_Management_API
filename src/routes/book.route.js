@@ -10,9 +10,9 @@ const {
 const {
   moveCopyToRecycleBin,
   deleteCopyPermanently,
-  moveAllAvailableCopiesToRecycleBin,
   deleteAllAvailableCopiesPermanently,
   restoreFromRecycleBin,
+  moveAvailableCopiesByQuantity,
 } = require("../controllers/bookcopy.controller");
 const router = express.Router();
 
@@ -26,7 +26,7 @@ router.delete("/:id", deleteBookPermanently);
 // copies
 router.patch("/copy/:id", moveCopyToRecycleBin);
 router.delete("/copy/:id", deleteCopyPermanently);
-router.patch("/copy/:id/allavailable", moveAllAvailableCopiesToRecycleBin);
+router.patch("/copy/:id/allavailable", moveAvailableCopiesByQuantity);
 router.delete("/copy/:id/deleteavailable", deleteAllAvailableCopiesPermanently);
 router.patch("/copy/restore/:id", restoreFromRecycleBin);
 

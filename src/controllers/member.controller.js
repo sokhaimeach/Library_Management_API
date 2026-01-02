@@ -17,15 +17,45 @@ const createMember = async (req, res) => {
 // get all members
 const getAllMembers = async (req, res) => {
   try {
-    const members = await Member.find();
+    const { filter, search } = req.query;
+    const filters = filter.split(",");
+    let query = {};
+    if(filters.length > 0 && filters[0]){
+      query.member_type = {$in: filters};
+    }
+    if(search){
+      query.$or = [
+        {name: {$regex: search, $options: "i"}},
+        {"contact.phone_number": {$regex: search, $options: "i"}},
+        {"contact.email": {$regex: search, $options: "i"}}
+      ];
+    }
+
+    const members = await Member.find(query);
     if (members.length === 0) {
-      res.status(404).json({ message: "No members found" });
+      res.status(200).json([]);
     }
     res.status(200).json(members);
   } catch (err) {
     res.status(400).json({ message: "Error fetching members" + err.message });
   }
 };
+
+// get member by id 
+const getMemberById = async (req, res) => {
+  try{
+    const { id } = req.params;
+
+    const member = await Member.findById(id);
+    if(!member){
+      return res.status(404).json({message: "member not found"});
+    }
+
+    return res.status(200).json(member);
+  }catch(err){
+    res.status(400).json({message: "Error get member by id : "+err.message});
+  }
+}
 
 // update member info
 const updateMember = async (req, res) => {
@@ -74,4 +104,5 @@ module.exports = {
   getAllMembers,
   updateMember,
   changeMemberType,
+  getMemberById
 };

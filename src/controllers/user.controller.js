@@ -4,9 +4,9 @@ const User = require("../models/user");
 const createUser = async (req, res) => {
   try {
     const user = await User.create(req.body);
-    res.status(201).json(user).select("-password");
+    res.status(201).json({message: 'Create user ('+user.username+') successfully!!' ,user}).select("-password");
   } catch (error) {
-    res.status(500).json({ message: "Error create user " + error.message });
+    res.status(500).json({ message: "Create user failed!!" });
   }
 };
 

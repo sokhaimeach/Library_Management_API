@@ -3,8 +3,8 @@ const Category = require("../models/category");
 // create category
 const createCategory = async (req, res) => {
   try {
-    await Category.create(req.body);
-    res.status(201).json({ message: "Category created successfully" });
+    const category = await Category.create(req.body);
+    res.status(201).json({ message: "Category created successfully", id: category._id });
   } catch (error) {
     res
       .status(400)
@@ -15,7 +15,14 @@ const createCategory = async (req, res) => {
 // get all categories
 const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find();
+    const { search } = req.query;
+
+    let query = {};
+    if(search){
+      query = {name: {$regex: search, $options: "i"}};
+    }
+
+    const categories = await Category.find(query);
     if (categories.length === 0) {
       res.status(200).json({ message: "No categories found" });
     }

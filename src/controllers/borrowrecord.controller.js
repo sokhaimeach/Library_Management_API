@@ -8,6 +8,21 @@ const { default: mongoose } = require("mongoose");
 // get all borrow record
 const getAllRecord = async (req, res) => {
   try {
+    const { filter, search } = req.query;
+
+    const filters = filter.split(',');
+    let query = {};
+    if(filter && filters[0]){
+      query.status = {$in: filters};
+    }
+
+    if(search){
+      query.$or = [
+        {member_name: {$regex: search, $options: "i"}},
+        {book_title: {$regex: search, $options: "i"}}
+      ]
+    }
+
     const pipline = [
       {
         $lookup: {
@@ -41,10 +56,13 @@ const getAllRecord = async (req, res) => {
           return_date: 1,
         },
       },
+      {
+        $match: query
+      }
     ];
     const records = await BorrowRecord.aggregate(pipline);
     if (records.length === 0) {
-      res.status(404).json({ message: "No borrow record found!" });
+      res.status(200).json([]);
     }
     res.status(200).json(records);
   } catch (err) {
@@ -173,6 +191,7 @@ const getRecordDetails = async (req, res) => {
       },
       {
         $project: {
+          status: 1,
           member: 1,
           book: {
             title: 1,
@@ -188,12 +207,15 @@ const getRecordDetails = async (req, res) => {
           },
         },
       },
+      {
+        $limit: 1
+      }
     ];
     const record = await BorrowRecord.aggregate(pipline);
     if (!record) {
       return res.status(404).json({ message: "Borrow record not found" });
     }
-    res.status(200).json(record);
+    res.status(200).json(record[0]);
   } catch (err) {
     res
       .status(400)
@@ -208,7 +230,7 @@ const updateRecordStatus = async (req, res) => {
     const { status, damage_type, damage_fee } = req.body;
     const record = await BorrowRecord.findByIdAndUpdate(
       id,
-      { status },
+      { status, return_date: new Date() },
       { new: true },
     );
     if (!record) {

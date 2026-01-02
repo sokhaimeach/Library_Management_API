@@ -5,6 +5,7 @@ const {
   getAllMembers,
   updateMember,
   changeMemberType,
+  getMemberById,
 } = require("../controllers/member.controller");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
@@ -19,5 +20,6 @@ router.patch(
   verifyRoles(ROLE[0], ROLE[1]),
   changeMemberType,
 );
+router.get("/:id", protect, verifyRoles(ROLE[0], ROLE[1]), getMemberById);
 
 module.exports = router;
