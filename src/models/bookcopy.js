@@ -11,6 +11,10 @@ const BookCopySchema = new mongoose.Schema({
     enum: ["available", "unavailable", "lost"],
     default: "available",
   },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
   deleted: {
     type: Boolean,
     default: false,

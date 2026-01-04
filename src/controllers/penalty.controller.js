@@ -22,6 +22,10 @@ const createPenalty = async (req, res) => {
       note,
     });
     await penalty.save();
+
+    let status = penalty_type;
+    if(penalty_type === "damage") status = "damaged";
+    await BorrowRecord.findByIdAndUpdate(borrow_id, { status });
     res.status(201).json({ message: "Penalty created successfully", penalty });
   } catch (err) {
     res.status(400).json({ message: "Error creating penalty: " + err.message });
@@ -31,6 +35,21 @@ const createPenalty = async (req, res) => {
 // get all penalty
 const getAllPenalties = async (req, res) => {
   try {
+    const {filter, search } = req.query;
+    const filters = filter.split(",");
+
+    const matchStage = {};
+    if(filters.length > 0 && filters[0]){
+      matchStage.status = {$in : filters}
+    }
+
+    if(search){
+      matchStage.$or = [
+        {member_name: { $regex: search, $options: "i"}},
+        {phone_number: { $regex: search, $options: "i"}}
+      ]
+    }
+
     const pipline = [
       {
         $lookup: {
@@ -53,6 +72,7 @@ const getAllPenalties = async (req, res) => {
           received_at: 1,
         },
       },
+      { $match: matchStage}
     ];
     const data = await Penalty.aggregate(pipline);
     res.status(200).json({ message: "Penalties retrieved successfully", data });
@@ -164,7 +184,7 @@ const getPenaltyDetails = async (req, res) => {
     }
     res
       .status(200)
-      .json({ message: "Penalty details retrieved successfully", data });
+      .json({ message: "Penalty details retrieved successfully", data: data[0] });
   } catch (err) {
     res
       .status(400)

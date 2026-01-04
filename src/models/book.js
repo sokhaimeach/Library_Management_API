@@ -24,7 +24,7 @@ const BookSchema = new mongoose.Schema({
     default: null,
   },
   price: {
-    type: mongoose.Schema.Types.Decimal128,
+    type: Number,
     required: true,
     min: 0,
   },
@@ -36,6 +36,10 @@ const BookSchema = new mongoose.Schema({
   description: {
     type: String,
     default: null,
+  },
+  created_at: {
+    type: Date,
+    default: Date.now,
   },
   deleted: {
     type: Boolean,

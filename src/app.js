@@ -12,6 +12,7 @@ const borrowRecordRoutes = require("./routes/borrowrecord.route");
 const penaltyRoutes = require("./routes/penalty.route");
 const authRoutes = require("./routes/auth.route");
 const historyRoutes = require("./routes/history.route");
+const reportRoutes = require("./routes/report.route");
 
 // Initialize MongoDB connection
 connectDB();
@@ -30,5 +31,6 @@ app.use("/api/borrowrecord", borrowRecordRoutes);
 app.use("/api/penalties", penaltyRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/history", historyRoutes);
+app.use("/api/report", reportRoutes);
 
 module.exports = app;

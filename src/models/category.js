@@ -11,6 +11,10 @@ const CategorySchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model("categories", CategorySchema);

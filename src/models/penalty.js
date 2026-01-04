@@ -17,7 +17,7 @@ const PenaltySchema = new mongoose.Schema({
     required: true,
   },
   amount: {
-    type: mongoose.Schema.Types.Decimal128,
+    type: Number,
     required: true,
     min: 0,
   },

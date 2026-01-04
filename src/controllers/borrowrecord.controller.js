@@ -10,17 +10,17 @@ const getAllRecord = async (req, res) => {
   try {
     const { filter, search } = req.query;
 
-    const filters = filter.split(',');
+    const filters = filter.split(",");
     let query = {};
-    if(filter && filters[0]){
-      query.status = {$in: filters};
+    if (filter && filters[0]) {
+      query.status = { $in: filters };
     }
 
-    if(search){
+    if (search) {
       query.$or = [
-        {member_name: {$regex: search, $options: "i"}},
-        {book_title: {$regex: search, $options: "i"}}
-      ]
+        { member_name: { $regex: search, $options: "i" } },
+        { book_title: { $regex: search, $options: "i" } },
+      ];
     }
 
     const pipline = [
@@ -57,8 +57,8 @@ const getAllRecord = async (req, res) => {
         },
       },
       {
-        $match: query
-      }
+        $match: query,
+      },
     ];
     const records = await BorrowRecord.aggregate(pipline);
     if (records.length === 0) {
@@ -105,7 +105,7 @@ const createRecord = async (req, res) => {
     await BookCopy.findByIdAndUpdate(
       copy._id,
       { status: "unavailable" },
-      { new: true },
+      { new: true }
     );
     // record borrow
     await BorrowRecord.create({
@@ -208,8 +208,8 @@ const getRecordDetails = async (req, res) => {
         },
       },
       {
-        $limit: 1
-      }
+        $limit: 1,
+      },
     ];
     const record = await BorrowRecord.aggregate(pipline);
     if (!record) {
@@ -231,17 +231,18 @@ const updateRecordStatus = async (req, res) => {
     const record = await BorrowRecord.findByIdAndUpdate(
       id,
       { status, return_date: new Date() },
-      { new: true },
+      { new: true }
     );
+
     if (!record) {
       return res.status(404).json({ message: "Borrow record not found" });
     }
     // update book copy status based on status
-    res.status(200).json({
+    return res.status(200).json({
       message: await updateBookCopyStatusAndCreatePenalty(
         record,
         damage_type,
-        damage_fee,
+        damage_fee
       ),
     });
   } catch (err) {
@@ -255,7 +256,7 @@ const updateRecordStatus = async (req, res) => {
 async function updateBookCopyStatusAndCreatePenalty(
   record,
   damage_type,
-  damage_fee,
+  damage_fee
 ) {
   switch (record.status) {
     // case returned
@@ -266,7 +267,36 @@ async function updateBookCopyStatusAndCreatePenalty(
       if (!copy) {
         return "Book copy not found";
       }
-      return "Book copy status updated";
+      let fine_fee = 0;
+      const lateDays = Math.ceil(
+        (record.return_date - record.due_date) / (1000 * 60 * 60 * 24)
+      );
+      if (lateDays > 0) {
+        if (lateDays < 7) {
+          return "Book returned within 7 days, no penalty";
+        } else if (lateDays < 14) {
+          fine_fee = 0.5;
+        } else if (lateDays < 21) {
+          fine_fee = 1;
+        } else {
+          fine_fee = 2;
+        }
+      } else {
+        return "Book returned on time";
+      }
+      await BorrowRecord.findByIdAndUpdate(
+        record._id,
+        { status: "late", return_date: new Date() },
+        { new: true }
+      );
+      await Penalty.create({
+        member_id: record.member_id,
+        borrow_id: record._id,
+        penalty_type: "late",
+        amount: fine_fee,
+        note: `Book returned ${lateDays} days late`,
+      });
+      return "Member has been penalized for late return";
     }
     // case lost
     case "lost": {
@@ -291,40 +321,6 @@ async function updateBookCopyStatusAndCreatePenalty(
         member_type: "blacklist",
       });
       return "Member has been added to blacklist and penalized for lost book";
-    }
-    // case late
-    case "late": {
-      const copy = await BookCopy.findByIdAndUpdate(record.copy_id, {
-        status: "available",
-      });
-      if (!copy) {
-        return "Book copy not found";
-      }
-      let fine_fee = 0;
-      const lateDays = Math.ceil(
-        (record.return_date - record.due_date) / (1000 * 60 * 60 * 24),
-      );
-      if (lateDays > 0) {
-        if (lateDays < 7) {
-          return "Book returned within 7 days, no penalty";
-        } else if (lateDays < 14) {
-          fine_fee = 0.5;
-        } else if (lateDays < 21) {
-          fine_fee = 1;
-        } else {
-          fine_fee = 2;
-        }
-      } else {
-        return "Book returned on time";
-      }
-      await Penalty.create({
-        member_id: record.member_id,
-        borrow_id: record._id,
-        penalty_type: "late",
-        amount: fine_fee,
-        note: `Book returned ${lateDays} days late`,
-      });
-      return "Member has been penalized for late return";
     }
     // case damaged
     case "damaged": {
@@ -354,7 +350,7 @@ async function updateBookCopyStatusAndCreatePenalty(
         const book = await Book.findByIdAndUpdate(
           record.book_id,
           { $inc: { total_copies: -1 } },
-          { new: true },
+          { new: true }
         );
         if (!book) {
           return "Book not found";

@@ -17,6 +17,10 @@ const AuthorSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  created_at: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model("authors", AuthorSchema);
