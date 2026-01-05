@@ -13,7 +13,28 @@ const createUser = async (req, res) => {
 // get users
 const getUsers = async (req, res) => {
   try {
+    const { filter, search, filterStatus } = req.query;
+    const filters = filter.split(',');
+
+    const query = {};
+    if(filters, filters[0]) {
+      query.role = { $in: filters};
+    }
+
+    if (filterStatus) {
+      query.status = { $eq: filterStatus === 'active' ? true : false }
+    }
+
+    if(search) {
+      query.$or = [
+        {username: { $regex: search, $options: "i"}},
+        {"contact.phone_number": { $regex: search, $options: "i"}},
+        {"contact.email": { $regex: search, $options: "i"}},
+      ]
+    }
+
     const pipline = [
+      { $match: query },
       {
         $project: {
           username: 1,
