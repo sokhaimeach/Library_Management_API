@@ -109,11 +109,11 @@ const moveAvailableCopiesByQuantity = async (req, res) => {
 const deleteAllAvailableCopiesPermanently = async (req, res) => {
   try {
     const { id } = req.params;
-    const copies = await BookCopy.find({ book_id: id, status: "available", deleted: true });
+    const copies = await BookCopy.find({ book_id: id, status: {$ne: "unavailable"}, deleted: true });
     if (copies.length === 0) {
       return res.status(404).json({ message: "No available copies found" });
     }
-    await BookCopy.deleteMany({ book_id: id, status: "available", deleted: true });
+    await BookCopy.deleteMany({ book_id: id, status: {$ne: "unavailable"}, deleted: true });
 
     await Book.deleteOne({_id: id, deleted: true});
     res

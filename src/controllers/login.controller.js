@@ -12,6 +12,9 @@ const login = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Invalid username or password" });
     }
+    if(!user.status) {
+      return res.status(404).json({message: "This user has been disable"});
+    }
     const passwordMatching = await user.matchPassword(password);
     if (!user || !passwordMatching) {
       return res.status(400).json({ message: "Invalid username or password" });
@@ -40,6 +43,10 @@ const loginByEmail = async (req, res) => {
     if (!user) {
       return res.status(400).json({ message: "Invalid email" });
     }
+    if(!user.status) {
+      return res.status(404).json({message: "This user has been disable"});
+    }
+
     const token = generateToken(user._id);
     return res.status(200).json({
       message: "Login successfully",

@@ -97,7 +97,7 @@ const createRecord = async (req, res) => {
         .json({ message: "VIP Member has reached maximum borrow limit" });
     }
     // find available copy
-    const copy = await BookCopy.findOne({ book_id, status: "available" });
+    const copy = await BookCopy.findOne({ book_id, status: "available", deleted: false });
     if (!copy) {
       res.status(404).json({ message: "No available copy found" });
     }
