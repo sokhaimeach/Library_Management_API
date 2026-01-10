@@ -16,60 +16,59 @@ const {
 } = require("../controllers/bookcopy.controller");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
-const ROLE = process.env.ROLES.split(",");
 const router = express.Router();
 
 // book
-router.post("/", protect, verifyRoles(ROLE[0], ROLE[2]), createBook);
+router.post("/", protect, verifyRoles("admin", "stock-keeper"), createBook);
 router.get("/", protect, getAllBooks);
-router.put("/:id", protect, verifyRoles(ROLE[0], ROLE[2]), updateBook);
+router.put("/:id", protect, verifyRoles("admin", "stock-keeper"), updateBook);
 router.patch(
   "/:id/recycle",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   moveBookToRecycleBin,
 );
 router.get(
   "/recycle",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   getAllRemoveBook,
 );
 router.delete(
   "/:id",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   deleteBookPermanently,
 );
 // copies
 router.patch(
   "/copy/:id",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   moveCopyToRecycleBin,
 );
 router.delete(
   "/copy/:id",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   deleteCopyPermanently,
 );
 router.patch(
   "/copy/:id/allavailable",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   moveAvailableCopiesByQuantity,
 );
 router.delete(
   "/copy/:id/deleteavailable",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   deleteAllAvailableCopiesPermanently,
 );
 router.patch(
   "/copy/restore/:id",
   protect,
-  verifyRoles(ROLE[0], ROLE[2]),
+  verifyRoles("admin", "stock-keeper"),
   restoreFromRecycleBin,
 );
 

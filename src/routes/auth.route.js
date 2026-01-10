@@ -1,6 +1,5 @@
 const express = require("express");
 const router = express.Router();
-const ROLES = process.env.ROLES.split(",");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
 const { login, loginByEmail } = require("../controllers/login.controller");
@@ -12,6 +11,6 @@ const {
 router.post("/login", login);
 router.post("/loginByEmail", loginByEmail);
 router.patch("/changePassword", protect, changePassword);
-router.patch("/reset/:id", protect, verifyRoles(ROLES[0]), resetPassword);
+router.patch("/reset/:id", protect, verifyRoles("admin"), resetPassword);
 
 module.exports = router;

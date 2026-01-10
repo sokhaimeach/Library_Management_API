@@ -1,11 +1,23 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { protect } = require('../middleware/auth.middleware');
+const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
-const { getMemberBorrow, getMemberPenalty } = require('../controllers/memberHistory.controller');
-const ROLE = process.env.ROLES.split(",");
+const {
+  getMemberBorrow,
+  getMemberPenalty,
+} = require("../controllers/memberHistory.controller");
 
-router.get('/borrow/:id', protect, verifyRoles(ROLE[0], ROLE[1]), getMemberBorrow);
-router.get('/penalty/:id', protect, verifyRoles(ROLE[0], ROLE[1]), getMemberPenalty)
+router.get(
+  "/borrow/:id",
+  protect,
+  verifyRoles("admin", "librarian"),
+  getMemberBorrow,
+);
+router.get(
+  "/penalty/:id",
+  protect,
+  verifyRoles("admin", "librarian"),
+  getMemberPenalty,
+);
 
 module.exports = router;

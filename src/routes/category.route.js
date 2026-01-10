@@ -7,12 +7,21 @@ const {
 } = require("../controllers/category.controller");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
-const ROLE = process.env.ROLES.split(",");
 const router = express.Router();
 
 router.get("/", protect, getAllCategories);
-router.post("/", protect, verifyRoles(ROLE[0], ROLE[2]), createCategory);
-router.put("/:id", protect, verifyRoles(ROLE[0], ROLE[2]), updateCategory);
-router.delete("/:id", protect, verifyRoles(ROLE[0], ROLE[2]), deleteCategory);
+router.post("/", protect, verifyRoles("admin", "stock-keeper"), createCategory);
+router.put(
+  "/:id",
+  protect,
+  verifyRoles("admin", "stock-keeper"),
+  updateCategory,
+);
+router.delete(
+  "/:id",
+  protect,
+  verifyRoles("admin", "stock-keeper"),
+  deleteCategory,
+);
 
 module.exports = router;

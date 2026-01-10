@@ -7,17 +7,21 @@ const {
 } = require("../controllers/borrowrecord.controller");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
-const ROLE = process.env.ROLES.split(",");
 const router = express.Router();
 
-router.get("/", protect, verifyRoles(ROLE[0], ROLE[1]), getAllRecord);
-router.post("/", protect, verifyRoles(ROLE[0], ROLE[1]), createRecord);
+router.get("/", protect, verifyRoles("admin", "librarian"), getAllRecord);
+router.post("/", protect, verifyRoles("admin", "librarian"), createRecord);
 router.get(
   "/:id/detail",
   protect,
-  verifyRoles(ROLE[0], ROLE[1]),
+  verifyRoles("admin", "librarian"),
   getRecordDetails,
 );
-router.put("/:id", protect, verifyRoles(ROLE[0], ROLE[1]), updateRecordStatus);
+router.put(
+  "/:id",
+  protect,
+  verifyRoles("admin", "librarian"),
+  updateRecordStatus,
+);
 
 module.exports = router;

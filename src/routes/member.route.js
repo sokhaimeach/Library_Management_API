@@ -9,17 +9,16 @@ const {
 } = require("../controllers/member.controller");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
-const ROLE = process.env.ROLES.split(",");
 
-router.post("/", protect, verifyRoles(ROLE[0], ROLE[1]), createMember);
-router.get("/", protect, verifyRoles(ROLE[0], ROLE[1]), getAllMembers);
-router.put("/:id", protect, verifyRoles(ROLE[0], ROLE[1]), updateMember);
+router.post("/", protect, verifyRoles("admin", "librarian"), createMember);
+router.get("/", protect, verifyRoles("admin", "librarian"), getAllMembers);
+router.put("/:id", protect, verifyRoles("admin", "librarian"), updateMember);
 router.patch(
   "/:id/type",
   protect,
-  verifyRoles(ROLE[0], ROLE[1]),
+  verifyRoles("admin", "librarian"),
   changeMemberType,
 );
-router.get("/:id", protect, verifyRoles(ROLE[0], ROLE[1]), getMemberById);
+router.get("/:id", protect, verifyRoles("admin", "librarian"), getMemberById);
 
 module.exports = router;
