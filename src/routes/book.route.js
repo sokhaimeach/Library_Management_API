@@ -13,6 +13,7 @@ const {
   deleteAllAvailableCopiesPermanently,
   restoreFromRecycleBin,
   moveAvailableCopiesByQuantity,
+  addBookCopy,
 } = require("../controllers/bookcopy.controller");
 const { protect } = require("../middleware/auth.middleware");
 const { verifyRoles } = require("../middleware/role.middleware");
@@ -70,6 +71,12 @@ router.patch(
   protect,
   verifyRoles("admin", "stock-keeper"),
   restoreFromRecycleBin,
+);
+router.post(
+  "/copy/add/:book_id",
+  protect,
+  verifyRoles("admin", "stock-keeper"),
+  addBookCopy,
 );
 
 module.exports = router;

@@ -1,6 +1,33 @@
 const BookCopy = require("../models/bookcopy");
 const Book = require("../models/book");
 
+// add more copy
+const addBookCopy = async (req, res) => {
+  try {
+    const { book_id } = req.params;
+    const { quantity } = req.body;
+    if(quantity <= 0) {
+      return res.status(400).json({message: `Quantity to add must be greater then 0`});
+    }
+    const book = await Book.findById(book_id);
+    if(!book) {
+      return res.status(404).json({message: `Book with id=${book_id} not found`});
+    }
+    await Book.findByIdAndUpdate(book_id, {total_copies: book.total_copies+quantity});
+    
+    let copies = [];
+    for (let i = 0; i < quantity; i++) {
+      copies.push({ book_id: book_id });
+    }
+    await BookCopy.create(copies);
+    return res.status(200).json({message: `You added ${quantity} ${quantity>1?"copies":"copy"} to ${book.title}`});
+  } catch(error) {
+    res
+      .status(400)
+      .json({ message: "Error more add copy" + error.message });
+  }
+}
+
 // move copy to recycle bin
 const moveCopyToRecycleBin = async (req, res) => {
   try {
@@ -154,6 +181,7 @@ const restoreFromRecycleBin = async (req, res) => {
 };
 
 module.exports = {
+  addBookCopy,
   moveCopyToRecycleBin,
   deleteCopyPermanently,
   moveAvailableCopiesByQuantity,
